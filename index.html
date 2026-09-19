@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Waguri — AI Chat Assistant</title>
+    <meta name="description" content="Waguri — a refined AI chat assistant. Multi-thread history stored in IndexedDB, synced live across tabs." />
+    <meta property="og:title" content="Waguri — AI Chat Assistant" />
+    <meta property="og:description" content="A refined AI chat assistant. Multi-thread history, live cross-tab sync, always-on model routing." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+    <aside id="sidebar" class="sidebar" aria-label="Conversations sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">W</div>
+        <div>
+          <div class="brand-title">Waguri</div>
+          <div class="brand-sub">quiet · precise</div>
+        </div>
+      </div>
+
+      <button id="newThreadBtn" class="btn btn-primary" aria-label="Start a new chat">
+        <span aria-hidden="true">+</span> New Chat
+      </button>
+
+      <div class="threads-label" id="threadsLabel">Conversations</div>
+      <div id="threadsList" class="threads" role="list" aria-labelledby="threadsLabel"></div>
+
+      <div class="attribution">Made by <span class="mcy">MCY</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn" aria-label="Open conversations menu" aria-controls="sidebar" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title">Waguri</div>
+        <div id="modelPill" class="model-pill" aria-label="Model status">
+          <span class="dot" aria-hidden="true"></span> <span id="modelLabel">Gemini Pro · 24/7</span>
+        </div>
+        <div class="tb-actions">
+          <button id="themeBtn" class="tb-btn" aria-label="Toggle theme" title="Toggle theme">
+            <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <div class="tb-menu-wrap">
+            <button id="exportBtn" class="tb-btn" aria-label="Export chat" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu" title="Export chat">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <div id="exportMenu" class="tb-menu" role="menu" aria-label="Export options">
+              <button role="menuitem" data-export="copy-current">Copy current chat</button>
+              <div class="divider" role="separator"></div>
+              <button role="menuitem" data-export="current-json">Current chat · JSON</button>
+              <button role="menuitem" data-export="current-txt">Current chat · TXT</button>
+              <div class="divider" role="separator"></div>
+              <button role="menuitem" data-export="all-json">All chats · JSON</button>
+              <button role="menuitem" data-export="all-txt">All chats · TXT</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Chat messages"></section>
+
+      <form id="composer" class="composer">
+        <textarea
+          id="input"
+          placeholder="Message Waguri…  (Enter to send, Shift+Enter for newline)"
+          rows="1"
+          autocomplete="off"
+          aria-label="Message input"
+        ></textarea>
+        <button id="sendBtn" class="btn btn-primary send" type="submit" aria-label="Send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
