@@ -23,7 +23,7 @@ By leveraging Lovable’s open, high-speed backend execution layer and pre-confi
 ```
 ┌─────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
 │                 │       │                        │       │                        │
-│   GemDev UI     │ ────► │ Lovable Backend Proxy  │ ────► │   Gemini Core Engine   │
+│   olivia        │ ────► │ Lovable Backend Proxy  │ ────► │   Gemini Core Engine   │
 │ (Developer Interface)   │ (Cost-Free API Router) │       │ (Intelligence & Code)  │
 │                 │       │                        │       │                        │
 └─────────────────┘       └────────────────────────┘       └────────────────────────┘
