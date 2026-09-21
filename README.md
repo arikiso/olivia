@@ -1,4 +1,4 @@
-# ⚡ olivia v1 (Beta)
+# ⚡ wag v1 (Beta)
 
 > **The zero-cost, ultra-fast Gemini coding agent powered by Lovable architecture.**
 
