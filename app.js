@@ -399,7 +399,51 @@ function setModelStatus(online, label) {
   if (label) modelLabel.textContent = label;
 }
 
-const MAX_ATTEMPTS = 3;
+// ---------- settings (model chain + retry behaviour) ----------
+const SETTINGS_KEY = "waguri.settings.v1";
+const ALL_MODELS = [
+  "google/gemini-3.1-pro-preview",
+  "google/gemini-2.5-pro",
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+  "openai/gpt-6-astra",
+];
+const DEFAULT_SETTINGS = {
+  chain: ALL_MODELS.slice(0, 4).map((id) => ({ id, on: true }))
+    .concat([{ id: ALL_MODELS[4], on: false }]),
+  attempts: 3,
+  backoffMs: 700,
+  backoffMode: "linear",
+};
+function loadSettings() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+    if (!raw) return structuredClone(DEFAULT_SETTINGS);
+    const known = new Map((raw.chain || []).map((c) => [c.id, !!c.on]));
+    const chain = [];
+    for (const c of raw.chain || []) if (ALL_MODELS.includes(c.id)) chain.push({ id: c.id, on: !!c.on });
+    for (const id of ALL_MODELS) if (!known.has(id)) chain.push({ id, on: false });
+    return {
+      chain: chain.length ? chain : structuredClone(DEFAULT_SETTINGS).chain,
+      attempts: Math.min(6, Math.max(1, Number(raw.attempts) || 3)),
+      backoffMs: Math.min(4000, Math.max(100, Number(raw.backoffMs) || 700)),
+      backoffMode: ["linear", "exponential", "fixed"].includes(raw.backoffMode) ? raw.backoffMode : "linear",
+    };
+  } catch { return structuredClone(DEFAULT_SETTINGS); }
+}
+let settings = loadSettings();
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+}
+function activeChain() {
+  const on = settings.chain.filter((c) => c.on).map((c) => c.id);
+  return on.length ? on : [ALL_MODELS[0]];
+}
+function backoffDelay(attempt) {
+  if (settings.backoffMode === "fixed") return settings.backoffMs;
+  if (settings.backoffMode === "exponential") return settings.backoffMs * Math.pow(2, attempt - 1);
+  return settings.backoffMs * attempt;
+}
 
 async function streamReply() {
   const t = currentThread();
@@ -422,13 +466,15 @@ async function streamReply() {
 
   let lastError = null;
 
+  const maxAttempts = settings.attempts;
+
   // 24/7 guarantee: client-side retries with backoff on top of server model failover.
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, models: activeChain() }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -459,16 +505,16 @@ async function streamReply() {
       break;
     } catch (err) {
       lastError = err;
-      if (attempt < MAX_ATTEMPTS) {
-        const wait = 700 * attempt;
-        bubbleContent.innerHTML = `<div class="typing" role="status"><span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="typing-label">Reconnecting… (attempt ${attempt + 1}/${MAX_ATTEMPTS})</span></div>`;
+      if (attempt < maxAttempts) {
+        const wait = backoffDelay(attempt);
+        bubbleContent.innerHTML = `<div class="typing" role="status"><span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="typing-label">Reconnecting… (attempt ${attempt + 1}/${maxAttempts})</span></div>`;
         await new Promise((r) => setTimeout(r, wait));
       }
     }
   }
 
   if (lastError) {
-    assistantMsg.content = `Couldn't reach the model after ${MAX_ATTEMPTS} attempts: ${lastError.message}`;
+    assistantMsg.content = `Couldn't reach the model after ${maxAttempts} attempts: ${lastError.message}`;
     assistantMsg.error = true;
     node.classList.add("error");
     bubbleContent.innerHTML = renderMarkdown(assistantMsg.content);
@@ -600,3 +646,94 @@ window.addEventListener("offline", () => setModelStatus(false, "offline"));
   renderThreads();
   renderMessages();
 })();
+
+// ---------- settings UI ----------
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsOverlay = document.getElementById("settingsOverlay");
+const settingsClose = document.getElementById("settingsClose");
+const settingsSave = document.getElementById("settingsSave");
+const settingsReset = document.getElementById("settingsReset");
+const chainList = document.getElementById("modelChainList");
+const retriesRange = document.getElementById("retriesRange");
+const retriesOut = document.getElementById("retriesOut");
+const backoffRange = document.getElementById("backoffRange");
+const backoffOut = document.getElementById("backoffOut");
+const backoffMode = document.getElementById("backoffMode");
+
+let draft = null;
+
+function renderChain() {
+  chainList.innerHTML = "";
+  draft.chain.forEach((entry, i) => {
+    const row = document.createElement("div");
+    row.className = "chain-row" + (entry.on ? "" : " off");
+    row.innerHTML = `
+      <span class="idx">${i + 1}</span>
+      <input type="checkbox" ${entry.on ? "checked" : ""} aria-label="Use ${entry.id}" />
+      <span class="name">${escapeHtml(entry.id)}</span>
+      <button type="button" data-dir="-1" aria-label="Move ${entry.id} up" ${i === 0 ? "disabled" : ""}>↑</button>
+      <button type="button" data-dir="1" aria-label="Move ${entry.id} down" ${i === draft.chain.length - 1 ? "disabled" : ""}>↓</button>`;
+    row.querySelector("input").addEventListener("change", (e) => {
+      entry.on = e.target.checked;
+      renderChain();
+    });
+    row.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      const j = i + Number(b.dataset.dir);
+      if (j < 0 || j >= draft.chain.length) return;
+      [draft.chain[i], draft.chain[j]] = [draft.chain[j], draft.chain[i]];
+      renderChain();
+    }));
+    chainList.appendChild(row);
+  });
+}
+
+function fillSettingsForm() {
+  renderChain();
+  retriesRange.value = String(draft.attempts);
+  retriesOut.textContent = String(draft.attempts);
+  backoffRange.value = String(draft.backoffMs);
+  backoffOut.textContent = draft.backoffMs + " ms";
+  backoffMode.value = draft.backoffMode;
+}
+
+function openSettings() {
+  draft = JSON.parse(JSON.stringify(settings));
+  fillSettingsForm();
+  settingsOverlay.classList.add("show");
+  settingsClose.focus();
+}
+function closeSettings() {
+  settingsOverlay.classList.remove("show");
+  settingsBtn.focus();
+}
+
+settingsBtn.addEventListener("click", openSettings);
+settingsClose.addEventListener("click", closeSettings);
+settingsOverlay.addEventListener("click", (e) => { if (e.target === settingsOverlay) closeSettings(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && settingsOverlay.classList.contains("show")) closeSettings();
+});
+retriesRange.addEventListener("input", () => {
+  draft.attempts = Number(retriesRange.value);
+  retriesOut.textContent = retriesRange.value;
+});
+backoffRange.addEventListener("input", () => {
+  draft.backoffMs = Number(backoffRange.value);
+  backoffOut.textContent = backoffRange.value + " ms";
+});
+backoffMode.addEventListener("change", () => { draft.backoffMode = backoffMode.value; });
+settingsReset.addEventListener("click", () => {
+  draft = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  fillSettingsForm();
+});
+settingsSave.addEventListener("click", () => {
+  settings = draft;
+  saveSettings();
+  const first = activeChain()[0];
+  setModelStatus(true, first.split("/").pop() + " · 24/7");
+  toast("Settings saved");
+  closeSettings();
+});
+
+// Reflect the preferred model on boot.
+setModelStatus(true, activeChain()[0].split("/").pop() + " · 24/7");

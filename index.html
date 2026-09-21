@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Olivia — Gemini replica with no limits.</title>
-    <meta name="description" content="Olivia — a refined AI chat assistant. Multi-thread history stored in IndexedDB, synced live across tabs." />
-    <meta property="og:title" content="Olivia — Gemini Replica" />
+    <title>Waguri — AI Chat Assistant</title>
+    <meta name="description" content="Waguri — a refined AI chat assistant. Multi-thread history stored in IndexedDB, synced live across tabs." />
+    <meta property="og:title" content="Waguri — AI Chat Assistant" />
     <meta property="og:description" content="A refined AI chat assistant. Multi-thread history, live cross-tab sync, always-on model routing." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -18,14 +18,15 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="bg-art" aria-hidden="true"></div>
     <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
     <aside id="sidebar" class="sidebar" aria-label="Conversations sidebar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">O</div>
+        <img class="brand-mark" src="assets/mascot.jpg" alt="Waguri" width="36" height="36" />
         <div>
-          <div class="brand-title">Olivia</div>
-          <div class="brand-sub">3.5 pro preveiw</div>
+          <div class="brand-title">Waguri</div>
+          <div class="brand-sub">quiet · precise</div>
         </div>
       </div>
 
@@ -36,7 +37,7 @@
       <div class="threads-label" id="threadsLabel">Conversations</div>
       <div id="threadsList" class="threads" role="list" aria-labelledby="threadsLabel"></div>
 
-      <div class="attribution">Made by <span class="arikiso">arikiso</span></div>
+      <div class="attribution">Made by <span class="mcy">MCY</span></div>
     </aside>
 
     <main class="main">
@@ -44,11 +45,14 @@
         <button id="menuBtn" class="icon-btn" aria-label="Open conversations menu" aria-controls="sidebar" aria-expanded="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-        <div class="topbar-title">Olivia</div>
+        <div class="topbar-title">Waguri</div>
         <div id="modelPill" class="model-pill" aria-label="Model status">
-          <span class="dot" aria-hidden="true"></span> <span id="modelLabel">Gemini Pro</span>
+          <span class="dot" aria-hidden="true"></span> <span id="modelLabel">Gemini Pro · 24/7</span>
         </div>
         <div class="tb-actions">
+          <button id="settingsBtn" class="tb-btn" aria-label="Open settings" title="Settings" aria-haspopup="dialog">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          </button>
           <button id="themeBtn" class="tb-btn" aria-label="Toggle theme" title="Toggle theme">
             <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
@@ -84,6 +88,46 @@
         </button>
       </form>
     </main>
+
+    <div id="settingsOverlay" class="overlay" role="presentation">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal-head">
+          <h2 id="settingsTitle">Settings</h2>
+          <button id="settingsClose" class="tb-btn" aria-label="Close settings">✕</button>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-label">Model failover chain</div>
+          <p class="modal-hint">Waguri tries these in order. Drag with the arrows to reorder; untick to skip.</p>
+          <div id="modelChainList" class="chain-list"></div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-label">Retries</div>
+          <label class="field">
+            <span>Retry attempts <output id="retriesOut">3</output></span>
+            <input id="retriesRange" type="range" min="1" max="6" step="1" value="3" aria-label="Retry attempts" />
+          </label>
+          <label class="field">
+            <span>Initial backoff <output id="backoffOut">700 ms</output></span>
+            <input id="backoffRange" type="range" min="100" max="4000" step="100" value="700" aria-label="Initial backoff in milliseconds" />
+          </label>
+          <label class="field">
+            <span>Backoff mode</span>
+            <select id="backoffMode" aria-label="Backoff mode">
+              <option value="linear">Linear (delay × attempt)</option>
+              <option value="exponential">Exponential (delay × 2ⁿ)</option>
+              <option value="fixed">Fixed delay</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="modal-foot">
+          <button id="settingsReset" class="btn" type="button">Reset defaults</button>
+          <button id="settingsSave" class="btn btn-primary" type="button">Save</button>
+        </div>
+      </div>
+    </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
