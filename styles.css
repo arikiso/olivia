@@ -114,13 +114,16 @@ body {
   background: var(--panel);
 }
 .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); display: none; }
-.model-pill {
+.model-picker {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 5px 11px; border: 1px solid var(--border); border-radius: 999px;
+  padding: 4px 8px 4px 11px; border: 1px solid var(--border); border-radius: 8px;
   font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);
 }
-.model-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #6fbf87; box-shadow: 0 0 8px rgba(111, 191, 135, 0.5); }
-.model-pill.offline .dot { background: #d98a8a; box-shadow: none; }
+.model-picker .dot { width: 6px; height: 6px; border-radius: 50%; background: #6fbf87; box-shadow: 0 0 8px rgba(111, 191, 135, 0.5); flex-shrink: 0; }
+.model-picker.offline .dot { background: #d98a8a; box-shadow: none; }
+.model-picker select { background: transparent; border: 0; color: var(--text); font: inherit; cursor: pointer; outline: none; }
+.model-picker select option { background: var(--panel-solid); color: var(--text); }
+.model-status { color: var(--text-mute); font-size: 11px; white-space: nowrap; }
 
 /* Messages */
 .messages { flex: 1; overflow-y: auto; padding: 30px 20px; scroll-behavior: smooth; }
@@ -316,7 +319,9 @@ body {
   .icon-btn { display: inline-flex; }
   .topbar-title { display: block; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topbar { padding: 11px 14px; }
-  .model-pill { display: none; }
+  .model-picker { margin-left: auto; max-width: 138px; }
+  .model-picker select { max-width: 108px; }
+  .model-status { display: none; }
   .hero-title { font-size: 25px; }
   .messages { padding: 20px 14px; }
   .composer { padding: 12px 14px 16px; }
